@@ -1,5 +1,7 @@
 {% extends "base.html" %}
+
 {% block title %}Upload File{% endblock %}
+
 {% block content %}
 <div class="jumbotron text-center">
     <h1 class="display-4">Upload Your Images</h1>
@@ -14,11 +16,15 @@
             </button>
             <button type="button" class="btn btn-secondary btn-lg ml-2" onclick="uploadImage()">Upload</button>
         </div>
-        <div id="uploadMessage" class="mt-3"></div>
-        <div class="progress" style="height: 25px; display:none;" id="loadingBar">
-            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
-                style="width: 100%;">Uploading...</div>
+        <div class="form-group progress" style="display:none;" id="loadingBar">
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                    aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 0%" id="progressBar">
+                    <span id="progressText"></span>
+                </div>
+            </div>
         </div>
+        <div id="uploadMessage" class="mt-3"></div>
         <div class="form-group text-center">
             <div id="previewContainer"
                 style="width: 100%; padding: 30px 0; display: inline-block; background-color: transparent;">
@@ -33,12 +39,12 @@
         var preview = document.getElementById('preview');
         var file = document.getElementById('file').files[0];
         var reader = new FileReader();
-
         reader.onload = function () {
             if (reader.readyState === 2) {
                 preview.src = reader.result;
                 document.getElementById('previewContainer').style.backgroundColor = 'transparent';  // Reset background on file change
                 document.getElementById('uploadMessage').innerHTML = '';  // Reset message on file change
+                document.getElementById('loadingBar').style.display = 'none';
             }
         }
         reader.readAsDataURL(file);
@@ -48,17 +54,27 @@
         var formData = new FormData();
         var file = document.getElementById('file').files[0];
         formData.append('file', file);
+        document.getElementById('loadingBar').style.display = 'block';  // Ensure the progress bar is displayed
+        var progressBar = document.getElementById('progressBar');
+        var progressText = document.getElementById('progressText');
 
-        document.getElementById('loadingBar').style.display = 'block';
-
-        axios.post('/upload', formData)
+        axios.post('/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            },
+            onUploadProgress: function (progressEvent) {
+                var percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                progressBar.style.width = percentCompleted + '%';
+                progressText.innerHTML = progressEvent.loaded + ' / ' + progressEvent.total + ' bytes (' + percentCompleted + '%)';
+            }
+        })
             .then(function (response) {
-                document.getElementById('loadingBar').style.display = 'none';
+                document.getElementById('loadingBar').style.display = 'block';
                 document.getElementById('uploadMessage').innerHTML = '<div class="alert alert-success">' + response.data.message + '</div>';
                 document.getElementById('previewContainer').style.backgroundColor = '#d4edda';  // Lighter green
             })
             .catch(function (error) {
-                document.getElementById('loadingBar').style.display = 'none';
+                document.getElementById('loadingBar').style.display = 'block';
                 document.getElementById('uploadMessage').innerHTML = '<div class="alert alert-danger">Error uploading file</div>';
                 document.getElementById('previewContainer').style.backgroundColor = '#f8d7da';  // Lighter red
             });

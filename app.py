@@ -76,7 +76,8 @@ def show_images():
         if allowed_file(filename):
             file_path = os.path.join(UPLOAD_FOLDER, filename)
             creation_time = datetime.fromtimestamp(os.path.getctime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
-            images.append({"filename": filename, "creation_time": creation_time})
+            file_size = os.path.getsize(file_path) / (1024 * 1024)  # Convert size to MiB
+            images.append({"filename": filename, "creation_time": creation_time, "size": f"{file_size:.2f} MiB"})
     return render_template("images.html", images=images)
 
 
