@@ -3,6 +3,7 @@ import os
 import uuid
 from werkzeug.utils import secure_filename
 from PIL import Image
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -24,6 +25,13 @@ def allowed_file(filename):
 @app.route("/")
 def index():
     return render_template("home.html")
+
+
+@app.route("/get_modified_time")
+def get_modified_time():
+    modified_time = datetime.fromtimestamp(os.path.getmtime(__file__))
+    formatted_modified_time = modified_time.strftime("%Y-%m-%d %H:%M:%S")
+    return jsonify({"modified_time": formatted_modified_time})
 
 
 @app.route("/upload", methods=["GET"])
@@ -56,7 +64,12 @@ def upload():
 
 @app.route("/show_images")
 def show_images():
-    images = [filename for filename in os.listdir(UPLOAD_FOLDER) if allowed_file(filename)]
+    images = []
+    for filename in os.listdir(UPLOAD_FOLDER):
+        if allowed_file(filename):
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            creation_time = datetime.fromtimestamp(os.path.getctime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
+            images.append({"filename": filename, "creation_time": creation_time})
     return render_template("images.html", images=images)
 
 

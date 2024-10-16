@@ -46,6 +46,11 @@
                     <a class="nav-link" href="/show_images">Images</a>
                 </li>
             </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <span class="nav-link" id="modified-time"></span>
+                </li>
+            </ul>
         </div>
     </nav>
     <div class="container">
@@ -57,6 +62,34 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> <!-- Axios included -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            axios.get('/get_modified_time')
+                .then(function (response) {
+                    const modifiedTime = new Date(response.data.modified_time);
+                    document.getElementById('modified-time').innerText = 'Last Modified On: ' + response.data.modified_time;
+
+                    setInterval(function () {
+                        const now = new Date();
+                        const elapsed = Math.floor((now - modifiedTime) / 1000);
+
+                        const days = Math.floor(elapsed / (24 * 3600));
+                        const hours = String(Math.floor((elapsed % (24 * 3600)) / 3600)).padStart(2, '0');
+                        const minutes = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+                        const seconds = String(elapsed % 60).padStart(2, '0');
+
+                        const elapsedString = `${days}d ${hours}:${minutes}:${seconds} ago`;
+
+                        document.getElementById('modified-time').innerText =
+                            `Last Modified On: ${response.data.modified_time}, ${elapsedString}`;
+                    }, 1000);
+                })
+                .catch(function (error) {
+                    console.error('Error fetching modified time:', error);
+                });
+        });
+    </script>
 </body>
 
 </html>
