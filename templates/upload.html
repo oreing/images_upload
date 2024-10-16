@@ -16,11 +16,13 @@
             </button>
             <button type="button" class="btn btn-secondary btn-lg ml-2" onclick="uploadImage()">Upload</button>
         </div>
-        <div class="form-group progress" style="display:none;" id="loadingBar">
-            <div class="progress" style="background-color:#9e9e9e">
-                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
-                    aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 0%" id="progressBar">
-                    <span id="progressText"></span>
+        <div style="display:none;" id="loadingBar">
+            <div><span id="progressText" style="font-size: 0.8rem;">Uploading ...</span></div>
+            <div class="form-group progress" style="display:block;">
+                <div class="progress" style="background-color:#9e9e9e">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%" id="progressBar">
+                    </div>
                 </div>
             </div>
         </div>
@@ -53,10 +55,13 @@
     function uploadImage() {
         var formData = new FormData();
         var file = document.getElementById('file').files[0];
-        formData.append('file', file);
-        document.getElementById('loadingBar').style.display = 'block';  // Ensure the progress bar is displayed
         var progressBar = document.getElementById('progressBar');
         var progressText = document.getElementById('progressText');
+
+        formData.append('file', file);
+        progressBar.style.width = '0%';
+        progressBar.setAttribute('aria-valuenow', 0)
+        document.getElementById('loadingBar').style.display = 'block';  // Ensure the progress bar is displayed
 
         axios.post('/upload', formData, {
             headers: {
@@ -65,16 +70,15 @@
             onUploadProgress: function (progressEvent) {
                 var percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
                 progressBar.style.width = percentCompleted + '%';
+                progressBar.setAttribute('aria-valuenow', percentCompleted)
                 progressText.innerHTML = progressEvent.loaded + ' / ' + progressEvent.total + ' bytes (' + percentCompleted + '%)';
             }
         })
             .then(function (response) {
-                document.getElementById('loadingBar').style.display = 'block';
                 document.getElementById('uploadMessage').innerHTML = '<div class="alert alert-success">' + response.data.message + '</div>';
                 document.getElementById('previewContainer').style.backgroundColor = '#d4edda';  // Lighter green
             })
             .catch(function (error) {
-                document.getElementById('loadingBar').style.display = 'block';
                 document.getElementById('uploadMessage').innerHTML = '<div class="alert alert-danger">Error uploading file</div>';
                 document.getElementById('previewContainer').style.backgroundColor = '#f8d7da';  // Lighter red
             });
