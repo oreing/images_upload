@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Upload File{% endblock %}
+
+{% block content %}
+<div class="jumbotron text-center">
+    <h1 class="display-4">Upload Your Images</h1>
+    <p class="lead">Choose your favorite images and upload them to our gallery.</p>
+    <hr class="my-4">
+    <div id="uploadForm">
+        <div class="form-group">
+            <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('file').click()">
+                Choose File
+                <input type="file" name="file" id="file" accept="image/*" style="display: none;"
+                    onchange="previewImage(event)">
+            </button>
+            <button type="button" class="btn btn-secondary btn-lg ml-2" onclick="uploadImage()">Upload</button>
+        </div>
+        <div id="uploadMessage" class="mt-3"></div>
+        <div class="form-group text-center">
+            <div id="previewContainer"
+                style="width: 100%; padding: 30px 0; display: inline-block; background-color: transparent;">
+                <img id="preview" src="" alt="" class="img-thumbnail" style="max-width: 100%;">
+            </div>
+        </div>
+        <div class="progress" style="height: 25px; display:none;" id="loadingBar">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                style="width: 100%;">Uploading...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function previewImage(event) {
+        var preview = document.getElementById('preview');
+        var file = document.getElementById('file').files[0];
+        var reader = new FileReader();
+
+        reader.onload = function () {
+            if (reader.readyState === 2) {
+                preview.src = reader.result;
+                document.getElementById('previewContainer').style.backgroundColor = 'transparent';  // Reset background on file change
+                document.getElementById('uploadMessage').innerHTML = '';  // Reset message on file change
+            }
+        }
+        reader.readAsDataURL(file);
+    }
+
+    function uploadImage() {
+        var formData = new FormData();
+        var file = document.getElementById('file').files[0];
+        formData.append('file', file);
+
+        document.getElementById('loadingBar').style.display = 'block';
+
+        axios.post('/upload', formData)
+            .then(function (response) {
+                document.getElementById('loadingBar').style.display = 'none';
+                document.getElementById('uploadMessage').innerHTML = '<div class="alert alert-success">' + response.data.message + '</div>';
+                document.getElementById('previewContainer').style.backgroundColor = '#d4edda';  // Lighter green
+            })
+            .catch(function (error) {
+                document.getElementById('loadingBar').style.display = 'none';
+                document.getElementById('uploadMessage').innerHTML = '<div class="alert alert-danger">Error uploading file</div>';
+                document.getElementById('previewContainer').style.backgroundColor = '#f8d7da';  // Lighter red
+            });
+    }
+</script>
+{% endblock %}

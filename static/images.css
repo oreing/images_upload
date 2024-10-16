@@ -1,0 +1,22 @@
+.scale80 {
+  -webkit-transform: scale(0.8);
+  -moz-transform: scale(0.8);
+  transform: scale(0.8);
+  background-color: #d4edda;
+  border: 5px solid #11d414;
+}
+
+.batch-delete {
+  background-color: #f8d7da;
+  color: black;
+  border: 3px solid #f44336;
+}
+
+.select-btn {
+  margin-top: 10px;
+  background-color: #d4edda;
+  color: black;
+  border: 3px solid green;
+  border-radius: 10px;
+  width: 80%;
+}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="jumbotron text-center">
+    <h1 class="display-4">Welcome to My App</h1>
+    <p class="lead">Your go-to place for uploading and viewing images. Enjoy a smooth experience with our intuitive
+        interface.</p>
+    <hr class="my-4">
+    <p>Get started by uploading your images or browsing the gallery.</p>
+    <a class="btn btn-primary btn-lg" href="/upload" role="button">Upload</a>
+    <a class="btn btn-secondary btn-lg" href="/show_images" role="button">View Gallery</a>
+</div>
+{% endblock %}
