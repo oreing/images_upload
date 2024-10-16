@@ -4,11 +4,22 @@ import uuid
 from werkzeug.utils import secure_filename
 from PIL import Image
 from datetime import datetime
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 
+# Load environment variables from .env file
+load_dotenv(".env.Azure")
+
+# Azure Blob Storage configuration
+connect_str = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+container_name = os.getenv("AZURE_STORAGE_CONTAINER_NAME")
+blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+container_client = blob_service_client.get_container_client(container_name)
+
 # Use home directory for upload path
-UPLOAD_FOLDER = os.path.expanduser("/home/site/wwwroot/upload")
+UPLOAD_FOLDER = os.path.expanduser("/home/site/wwwroot/upload_file_share")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Ensure the upload folder exists during initialization
@@ -24,7 +35,8 @@ def allowed_file(filename):
 
 @app.route("/")
 def index():
-    files = os.listdir(UPLOAD_FOLDER)
+    blobs_list = container_client.list_blobs()
+    files = [blob.name for blob in blobs_list]
     return render_template("home.html", files=files, upload_folder=os.path.abspath(UPLOAD_FOLDER))
 
 
@@ -58,10 +70,14 @@ def upload():
             image = Image.open(file)
             image.verify()
             file.seek(0)  # Reset file pointer to beginning
-
             filename = secure_filename(f"{uuid.uuid4()}.{file.filename.rsplit('.', 1)[1].lower()}")
             file_path = os.path.join(UPLOAD_FOLDER, filename)
             file.save(file_path)
+
+            # Upload to Azure Blob Storage
+            blob_client = container_client.get_blob_client(filename)
+            with open(file_path, "rb") as data:
+                blob_client.upload_blob(data)
 
             return jsonify(message="File successfully uploaded"), 200
         except (IOError, SyntaxError) as e:
@@ -71,13 +87,15 @@ def upload():
 
 @app.route("/show_images")
 def show_images():
-    images = []
-    for filename in os.listdir(UPLOAD_FOLDER):
-        if allowed_file(filename):
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
-            creation_time = datetime.fromtimestamp(os.path.getctime(file_path)).strftime("%Y-%m-%d %H:%M:%S")
-            file_size = os.path.getsize(file_path) / (1024 * 1024)  # Convert size to MiB
-            images.append({"filename": filename, "creation_time": creation_time, "size": f"{file_size:.2f} MiB"})
+    blobs_list = container_client.list_blobs()
+    images = [
+        {
+            "filename": blob.name,
+            "creation_time": blob.creation_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "size": f"{blob.size / (1024 * 1024):.2f} MiB",
+        }
+        for blob in blobs_list
+    ]
     return render_template("images.html", images=images)
 
 
@@ -86,19 +104,18 @@ def delete_image():
     data = request.get_json()
     filenames = data["filenames"]
     for filename in filenames:
-        file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        blob_client = container_client.get_blob_client(filename)
+        blob_client.delete_blob()
     return jsonify(message="Image(s) deleted successfully"), 200
 
 
 @app.route("/images/<filename>")
 def send_image(filename):
-    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    if os.path.exists(file_path):
-        return send_file(os.path.abspath(file_path))
-    else:
-        return jsonify(message="File does not exist"), 404
+    blob_client = container_client.get_blob_client(filename)
+    download_file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    with open(download_file_path, "wb") as download_file:
+        download_file.write(blob_client.download_blob().readall())
+    return send_file(download_file_path)
 
 
 if __name__ == "__main__":
