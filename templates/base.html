@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            margin: 20px;
             font-family: Arial, sans-serif;
         }
 
@@ -28,13 +27,13 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-custom">
-        <a class="navbar-brand" href="/">My App</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">My App</a>
+        <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarColor01"
+            aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
+        <div class="navbar-collapse collapse" id="navbarColor01" style="">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
                     <a class="nav-link" href="/">Home</a>
@@ -46,12 +45,12 @@
                     <a class="nav-link" href="/show_images">Images</a>
                 </li>
             </ul>
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <span class="nav-link" id="modified-time"></span>
+                    <span class="nav-link" id="modified-time">Last Modified: 8d 88:88:88s ago</span>
                 </li>
                 <li class="nav-item">
-                    <span class="nav-link" id="server-time"></span>
+                    <span class="nav-link" id="server-time">Server Time: 8888-88-88 88:88:88</span>
                 </li>
             </ul>
         </div>
@@ -69,30 +68,26 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             let modifiedTime;
-
             axios.get('/get_modified_time')
                 .then(function (response) {
-                    modifiedTime = new Date(response.data.modified_time);
-                    document.getElementById('modified-time').innerText = 'Last Modified On: ' + response.data.modified_time;
+                    modifiedTime = new Date(response.data.modified_time.replace(' ', 'T'));
                 })
                 .catch(function (error) {
                     console.error('Error fetching modified time:', error);
                 });
-
             setInterval(function () {
                 axios.get('/get_current_time')
                     .then(function (response) {
-                        const now = new Date(response.data.current_time);
+                        const now = new Date(response.data.current_time.replace(' ', 'T'));
                         const elapsed = Math.floor((now - modifiedTime) / 1000);
                         const days = Math.floor(elapsed / (24 * 3600));
-                        const hours = String(Math.floor((elapsed % (24 * 3600)) / 3600)).padStart(2, '0');
-                        const minutes = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
-                        const seconds = String(elapsed % 60).padStart(2, '0');
+                        const hours = Math.floor((elapsed % (24 * 3600)) / 3600).toString().padStart(2, '0');
+                        const minutes = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0');
+                        const seconds = (elapsed % 60).toString().padStart(2, '0');
                         const elapsedString = `${days}d ${hours}:${minutes}:${seconds}s ago`;
 
-                        document.getElementById('modified-time').innerText =
-                            `Last Modified On: ${modifiedTime.toISOString().replace('T', ' ').substr(0, 19)}, ${elapsedString}`;
-                        document.getElementById('server-time').innerText = 'Current Server Time: ' + response.data.current_time;
+                        document.getElementById('modified-time').innerText = `Last Modified: ${elapsedString}`;
+                        document.getElementById('server-time').innerText = 'Server Time: ' + response.data.current_time;
                     })
                     .catch(function (error) {
                         console.error('Error fetching current time:', error);
