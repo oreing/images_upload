@@ -50,6 +50,9 @@
                 <li class="nav-item">
                     <span class="nav-link" id="modified-time"></span>
                 </li>
+                <li class="nav-item">
+                    <span class="nav-link" id="server-time"></span>
+                </li>
             </ul>
         </div>
     </nav>
@@ -65,29 +68,36 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> <!-- Axios included -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            let modifiedTime;
+
             axios.get('/get_modified_time')
                 .then(function (response) {
-                    const modifiedTime = new Date(response.data.modified_time);
+                    modifiedTime = new Date(response.data.modified_time);
                     document.getElementById('modified-time').innerText = 'Last Modified On: ' + response.data.modified_time;
-
-                    setInterval(function () {
-                        const now = new Date();
-                        const elapsed = Math.floor((now - modifiedTime) / 1000);
-
-                        const days = Math.floor(elapsed / (24 * 3600));
-                        const hours = String(Math.floor((elapsed % (24 * 3600)) / 3600)).padStart(2, '0');
-                        const minutes = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
-                        const seconds = String(elapsed % 60).padStart(2, '0');
-
-                        const elapsedString = `${days}d ${hours}:${minutes}:${seconds} ago`;
-
-                        document.getElementById('modified-time').innerText =
-                            `Last Modified On: ${response.data.modified_time}, ${elapsedString}`;
-                    }, 1000);
                 })
                 .catch(function (error) {
                     console.error('Error fetching modified time:', error);
                 });
+
+            setInterval(function () {
+                axios.get('/get_current_time')
+                    .then(function (response) {
+                        const now = new Date(response.data.current_time);
+                        const elapsed = Math.floor((now - modifiedTime) / 1000);
+                        const days = Math.floor(elapsed / (24 * 3600));
+                        const hours = String(Math.floor((elapsed % (24 * 3600)) / 3600)).padStart(2, '0');
+                        const minutes = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+                        const seconds = String(elapsed % 60).padStart(2, '0');
+                        const elapsedString = `${days}d ${hours}:${minutes}:${seconds}s ago`;
+
+                        document.getElementById('modified-time').innerText =
+                            `Last Modified On: ${modifiedTime.toISOString().replace('T', ' ').substr(0, 19)}, ${elapsedString}`;
+                        document.getElementById('server-time').innerText = 'Current Server Time: ' + response.data.current_time;
+                    })
+                    .catch(function (error) {
+                        console.error('Error fetching current time:', error);
+                    });
+            }, 1000);
         });
     </script>
 </body>

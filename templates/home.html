@@ -1,7 +1,5 @@
 {% extends "base.html" %}
-
 {% block title %}Home{% endblock %}
-
 {% block content %}
 <div class="jumbotron text-center">
     <h1 class="display-4">Welcome to My App</h1>
@@ -12,4 +10,46 @@
     <a class="btn btn-primary btn-lg" href="/upload" role="button">Upload</a>
     <a class="btn btn-secondary btn-lg" href="/show_images" role="button">View Gallery</a>
 </div>
+<div class="container mt-4">
+    <h2 class="mb-3">Uploaded Files</h2>
+    <p class="text-muted">Upload Folder Path: {{ upload_folder }}</p>
+    <div class="row">
+        {% for file in files %}
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">{{ file }}</h5>
+                    <p class="card-text">Path: {{ upload_folder }}/{{ file }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<style>
+    .card {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .card:hover {
+        transform: scale(1.05);
+    }
+
+    .card-title {
+        font-weight: bold;
+        font-size: 1.25em;
+    }
+
+    .card-text {
+        color: #6c757d;
+    }
+
+    .container {
+        margin-top: 20px;
+    }
+</style>
+
 {% endblock %}

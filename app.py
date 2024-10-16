@@ -8,7 +8,7 @@ from datetime import datetime
 app = Flask(__name__)
 
 # Use home directory for upload path
-UPLOAD_FOLDER = os.path.expanduser("~/wwwroot/upload")
+UPLOAD_FOLDER = os.path.expanduser("/home/site/wwwroot/upload")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Ensure the upload folder exists during initialization
@@ -24,7 +24,8 @@ def allowed_file(filename):
 
 @app.route("/")
 def index():
-    return render_template("home.html")
+    files = os.listdir(UPLOAD_FOLDER)
+    return render_template("home.html", files=files, upload_folder=os.path.abspath(UPLOAD_FOLDER))
 
 
 @app.route("/get_modified_time")
@@ -32,6 +33,12 @@ def get_modified_time():
     modified_time = datetime.fromtimestamp(os.path.getmtime(__file__))
     formatted_modified_time = modified_time.strftime("%Y-%m-%d %H:%M:%S")
     return jsonify({"modified_time": formatted_modified_time})
+
+
+@app.route("/get_current_time")
+def get_current_time():
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return jsonify({"current_time": current_time})
 
 
 @app.route("/upload", methods=["GET"])

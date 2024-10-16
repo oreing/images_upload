@@ -1,5 +1,6 @@
 # my
-deploy.sh
+deploy*.sh
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
